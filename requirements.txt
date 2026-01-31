@@ -1,0 +1,4 @@
+#fastapi server
+uvicorn 
+fastapi 
+typer
