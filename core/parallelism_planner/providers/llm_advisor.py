@@ -675,7 +675,7 @@ def collect_system_context() -> SystemContext:
         pass
     
     try:
-        import transformer_engine
+        import TransformerEngine.transformer_engine
         context.transformer_engine_version = transformer_engine.__version__
     except Exception:
         pass

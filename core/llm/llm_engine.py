@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, Optional
 
-from core.llm import llm_call, LLMConfig, get_config
+from llm import llm_call, LLMConfig, get_config
 
 
 class PerformanceAnalysisEngine:

@@ -1124,7 +1124,7 @@ class PerformanceCoreBase:
     def get_comm_overlap_analysis(self, model: str = "llama-3.1-70b") -> dict:
         """Estimate communication/computation overlap opportunities."""
         try:
-            from core.parallelism_planner.distributed_training import CommunicationOverlapAnalyzer
+            from core.parallelism_planner.providers.distributed_training import CommunicationOverlapAnalyzer
             from core.parallelism_planner.providers.model_analyzer import ModelAnalyzer
 
             analyzer = ModelAnalyzer()
@@ -1183,7 +1183,7 @@ class PerformanceCoreBase:
     def generate_slurm_script(self, model: str, nodes: int, gpus: int, framework: str) -> dict:
         """Generate a SLURM job script using the cluster config helper."""
         try:
-            from core.parallelism_planner.extras import JobScriptGenerator
+            from core.parallelism_planner.providers.extras import JobScriptGenerator
 
             generator = JobScriptGenerator()
             launch_cmd = (
@@ -1208,7 +1208,7 @@ class PerformanceCoreBase:
         try:
             from dataclasses import asdict
 
-            from core.parallelism_planner.distributed_training import NCCLTuningAdvisor, NCCLConfig
+            from core.parallelism_planner.providers.distributed_training import NCCLTuningAdvisor, NCCLConfig
 
             advisor = NCCLTuningAdvisor()
             if diagnose:
@@ -1392,7 +1392,7 @@ class PerformanceCoreBase:
     def get_vllm_config(self, model: str, target: str, compare: bool) -> dict:
         """Generate vLLM configuration or compare inference engines."""
         try:
-            from core.parallelism_planner.distributed_training import VLLMConfigGenerator
+            from core.parallelism_planner.providers.distributed_training import VLLMConfigGenerator
 
             generator = VLLMConfigGenerator()
             if compare:

@@ -29,7 +29,7 @@ import json
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
-from ..topology_detector import TopologyDetector, TopologyInfo
+from topology_detector import TopologyDetector, TopologyInfo
 from .model_analyzer import ModelAnalyzer, ModelArchitecture
 from .strategy_optimizer import (
     StrategyOptimizer,

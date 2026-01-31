@@ -594,7 +594,7 @@ class StrategyOptimizer:
 
 if __name__ == "__main__":
     # Demo with mock data
-    from ..topology_detector import TopologyInfo, GPUInfo, InterconnectInfo
+    from topology_detector import TopologyInfo, GPUInfo, InterconnectInfo
     from .model_analyzer import ModelAnalyzer
     
     # Create a sample topology (B200 multi-GPU)

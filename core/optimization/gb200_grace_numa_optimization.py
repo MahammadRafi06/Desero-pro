@@ -45,7 +45,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
-    from distributed_helper import setup_single_gpu_env
+    from core.optimization.GGNO_distributed_helper import setup_single_gpu_env
 except ImportError:
     def setup_single_gpu_env():
         if "RANK" not in os.environ:

@@ -61,8 +61,8 @@ class NVFP4TRTLLMBenchmark(VerificationPayloadMixin, BaseBenchmark):
         trt_msg = f"{trt_exc}" if trt_exc is not None else "TensorRT-LLM unavailable"
 
         try:
-            import transformer_engine.pytorch as te  # type: ignore
-            from transformer_engine.pytorch import fp8_autocast  # noqa: F401
+            import TransformerEngine.transformer_engine.pytorch as te  # type: ignore
+            from TransformerEngine.transformer_engine.pytorch import fp8_autocast  # noqa: F401
             self._stack_available = True
             self._te = te
         except Exception as exc:  # pragma: no cover - optional dependency

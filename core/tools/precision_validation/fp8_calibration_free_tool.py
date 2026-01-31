@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 # Add common to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent))
 
 from core.harness.benchmark_harness import (
     BaseBenchmark,
@@ -30,8 +30,8 @@ logger = get_logger(__name__)
 
 # Check for Transformer Engine
 try:
-    import transformer_engine.pytorch as te
-    from transformer_engine.common.recipe import Format, DelayedScaling
+    import TransformerEngine.transformer_engine.pytorch as te
+    from TransformerEngine.transformer_engine.common.recipe import Format, DelayedScaling
     TE_AVAILABLE = True
 except ImportError:
     TE_AVAILABLE = False

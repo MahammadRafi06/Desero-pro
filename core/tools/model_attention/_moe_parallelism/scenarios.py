@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, Mapping, Tuple
 
-from labs.moe_parallelism.plan import ClusterSpec, ModelSpec, ParallelismPlan, SPEC_PRESETS
+from .plan import ClusterSpec, ModelSpec, ParallelismPlan, SPEC_PRESETS
 
 
 @dataclass(frozen=True)

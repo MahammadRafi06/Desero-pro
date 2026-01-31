@@ -160,7 +160,7 @@ except ImportError:
 
 # Import LLM advisor for comprehensive optimization recommendations
 try:
-    from core.optimization.parallelism_planner.llm_advisor import (
+    from core.parallelism_planner.providers.llm_advisor import (
         LLMOptimizationAdvisor, SystemContext, OptimizationRequest, OptimizationGoal
     )
     LLM_ADVISOR_AVAILABLE = True
@@ -169,21 +169,21 @@ except ImportError:
 
 # Import distributed training tools
 try:
-    from core.optimization.parallelism_planner.distributed_training import DistributedTrainingAnalyzer
+    from core.parallelism_planner.providers.distributed_training import DistributedTrainingAnalyzer
     DISTRIBUTED_AVAILABLE = True
 except ImportError:
     DISTRIBUTED_AVAILABLE = False
 
 # Import RL optimization tools
 try:
-    from core.optimization.parallelism_planner.rl_optimization import RLOptimizationAnalyzer
+    from core.parallelism_planner.providers.rl_optimization import RLOptimizationAnalyzer
     RL_AVAILABLE = True
 except ImportError:
     RL_AVAILABLE = False
 
 # Import vLLM optimization tools
 try:
-    from core.optimization.parallelism_planner.vllm_optimization import VLLMOptimizer
+    from core.parallelism_planner.providers.vllm_optimization import VLLMOptimizer
     VLLM_AVAILABLE = True
 except ImportError:
     VLLM_AVAILABLE = False
@@ -1023,7 +1023,7 @@ class DashboardService:
     def get_nccl_recommendations(self, nodes: int, gpus: int, diagnose: bool) -> dict:
         """Get NCCL tuning recommendations."""
         try:
-            from core.optimization.parallelism_planner.distributed_training import NCCLTuningAdvisor, NCCLConfig
+            from core.parallelism_planner.providers.distributed_training import NCCLTuningAdvisor, NCCLConfig
             
             advisor = NCCLTuningAdvisor()
             config = NCCLConfig(
@@ -1043,7 +1043,7 @@ class DashboardService:
     def get_rlhf_optimization(self, model: str, algorithm: str, compare: bool) -> dict:
         """Get RLHF memory and optimization recommendations."""
         try:
-            from core.optimization.parallelism_planner.distributed_training import RLHFMemoryCalculator, RLHFAlgorithm
+            from core.parallelism_planner.providers.distributed_training import RLHFMemoryCalculator, RLHFAlgorithm
             
             alg_map = {
                 "ppo": RLHFAlgorithm.PPO,
@@ -1068,7 +1068,7 @@ class DashboardService:
     def get_moe_optimization(self, model: str) -> dict:
         """Get MoE parallelism optimization recommendations."""
         try:
-            from core.optimization.parallelism_planner.distributed_training import MoEOptimizer
+            from core.parallelism_planner.providers.distributed_training import MoEOptimizer
             
             optimizer = MoEOptimizer()
             result = optimizer.optimize(model)
@@ -1079,7 +1079,7 @@ class DashboardService:
     def get_long_context_optimization(self, model: str, seq_length: int) -> dict:
         """Get long-context optimization recommendations."""
         try:
-            from core.optimization.parallelism_planner.distributed_training import LongContextOptimizer
+            from core.parallelism_planner.providers.distributed_training import LongContextOptimizer
             
             optimizer = LongContextOptimizer()
             result = optimizer.optimize(model, seq_length)
@@ -1090,7 +1090,7 @@ class DashboardService:
     def get_vllm_config(self, model: str, target: str, compare: bool) -> dict:
         """Get vLLM configuration or compare inference engines."""
         try:
-            from core.optimization.parallelism_planner.distributed_training import VLLMConfigGenerator
+            from core.parallelism_planner.providers.distributed_training import VLLMConfigGenerator
             
             generator = VLLMConfigGenerator()
             if compare:
@@ -1105,7 +1105,7 @@ class DashboardService:
     def get_comm_overlap_analysis(self, model: str) -> dict:
         """Get communication-computation overlap analysis."""
         try:
-            from core.optimization.parallelism_planner.distributed_training import CommunicationOverlapAnalyzer
+            from core.parallelism_planner.providers.distributed_training import CommunicationOverlapAnalyzer
             
             analyzer = CommunicationOverlapAnalyzer()
             result = analyzer.analyze(model)
@@ -1116,7 +1116,7 @@ class DashboardService:
     def generate_slurm_script(self, model: str, nodes: int, gpus: int, framework: str) -> dict:
         """Generate SLURM job script for distributed training."""
         try:
-            from core.optimization.parallelism_planner.extras import JobScriptGenerator
+            from core.parallelism_planner.providers.extras import JobScriptGenerator
 
             generator = JobScriptGenerator()
             launch_cmd = (
@@ -1785,7 +1785,7 @@ class DashboardService:
     def generate_launch_plan_from_query(self, params: Dict[str, List[str]]) -> dict:
         """Generate launch plan JSON from query parameters."""
         try:
-            from core.optimization.parallelism_planner.launch_plan import generate_launch_plan
+            from core.parallelism_planner.providers.launch_plan import generate_launch_plan
             plan = generate_launch_plan(
                 model_params=int((params.get("model_params") or ["70"])[0]),
                 nodes=int((params.get("nodes") or ["1"])[0]),

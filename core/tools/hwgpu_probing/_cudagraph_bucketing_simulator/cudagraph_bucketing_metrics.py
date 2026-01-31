@@ -10,7 +10,7 @@ except Exception:  # pragma: no cover - optional dependency
     Counter = None  # type: ignore
     start_http_server = None  # type: ignore
 
-from ch18.cudagraph_bucketing_common import GraphStats
+from cudagraph_bucketing_common import GraphStats
 
 
 CAPTURE_COUNTER_NAME = "cudagraph_sim_captures_total"
