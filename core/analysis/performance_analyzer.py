@@ -7,7 +7,7 @@ from typing import Callable, Dict, Any, Optional, List
 
 # Find the repo root
 CODE_ROOT = Path(__file__).parent
-
+from core.discovery import get_bench_roots
 
 def _transform_aggregated_data(all_benchmarks: dict, timestamp: str) -> dict:
     """Transform aggregated benchmark data to dashboard format."""
@@ -109,62 +109,62 @@ def _transform_aggregated_data(all_benchmarks: dict, timestamp: str) -> dict:
     }
 
 
-# def load_benchmark_data(data_file: Optional[Path] = None, bench_roots: Optional[List[Path]] = None) -> dict:
-#     """Load benchmark results from disk (single file or aggregated artifacts)."""
-#     all_benchmarks: Dict[tuple, Dict[str, Any]] = {}
-#     latest_timestamp: Optional[str] = None
-#     bench_roots = bench_roots or get_bench_roots(repo_root=CODE_ROOT)
+def load_benchmark_data(data_file: Optional[Path] = None, bench_roots: Optional[List[Path]] = None) -> dict:
+    """Load benchmark results from disk (single file or aggregated artifacts)."""
+    all_benchmarks: Dict[tuple, Dict[str, Any]] = {}
+    latest_timestamp: Optional[str] = None
+    bench_roots = bench_roots or get_bench_roots(repo_root=CODE_ROOT)
 
-#     def _ingest_result_file(path: Path) -> None:
-#         nonlocal latest_timestamp
-#         with open(path) as f:
-#             data = json.load(f)
-#         timestamp = data.get("timestamp", "")
-#         if timestamp and (latest_timestamp is None or timestamp > latest_timestamp):
-#             latest_timestamp = timestamp
+    def _ingest_result_file(path: Path) -> None:
+        nonlocal latest_timestamp
+        with open(path) as f:
+            data = json.load(f)
+        timestamp = data.get("timestamp", "")
+        if timestamp and (latest_timestamp is None or timestamp > latest_timestamp):
+            latest_timestamp = timestamp
 
-#         for chapter_result in data.get("results", []):
-#             chapter = chapter_result.get("chapter", "unknown")
-#             for bench in chapter_result.get("benchmarks", []):
-#                 name = bench.get("example", "unknown")
-#                 key = (chapter, name)
-#                 speedup = bench.get("best_speedup", 0)
-#                 if key not in all_benchmarks or speedup > all_benchmarks[key].get("best_speedup", 0):
-#                     all_benchmarks[key] = bench
-#                     all_benchmarks[key]["_chapter"] = chapter
+        for chapter_result in data.get("results", []):
+            chapter = chapter_result.get("chapter", "unknown")
+            for bench in chapter_result.get("benchmarks", []):
+                name = bench.get("example", "unknown")
+                key = (chapter, name)
+                speedup = bench.get("best_speedup", 0)
+                if key not in all_benchmarks or speedup > all_benchmarks[key].get("best_speedup", 0):
+                    all_benchmarks[key] = bench
+                    all_benchmarks[key]["_chapter"] = chapter
 
-#     if data_file:
-#         path = Path(data_file)
-#         if path.exists():
-#             try:
-#                 _ingest_result_file(path)
-#             except Exception:
-#                 pass
-#     else:
-#         for root in bench_roots:
-#             artifacts_dir = root / "artifacts"
-#             if artifacts_dir.exists():
-#                 for result_file in sorted(artifacts_dir.rglob("benchmark_test_results.json")):
-#                     try:
-#                         _ingest_result_file(result_file)
-#                     except Exception:
-#                         pass
+    if data_file:
+        path = Path(data_file)
+        if path.exists():
+            try:
+                _ingest_result_file(path)
+            except Exception:
+                pass
+    else:
+        for root in bench_roots:
+            artifacts_dir = root / "artifacts"
+            if artifacts_dir.exists():
+                for result_file in sorted(artifacts_dir.rglob("benchmark_test_results.json")):
+                    try:
+                        _ingest_result_file(result_file)
+                    except Exception:
+                        pass
 
-#             default_path = root / "benchmark_test_results.json"
-#             if default_path.exists():
-#                 try:
-#                     _ingest_result_file(default_path)
-#                 except Exception:
-#                     pass
+            default_path = root / "benchmark_test_results.json"
+            if default_path.exists():
+                try:
+                    _ingest_result_file(default_path)
+                except Exception:
+                    pass
 
-#     if not all_benchmarks:
-#         return {
-#             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-#             "benchmarks": [],
-#             "summary": {"total_benchmarks": 0, "avg_speedup": 0, "max_speedup": 0},
-#         }
+    if not all_benchmarks:
+        return {
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "benchmarks": [],
+            "summary": {"total_benchmarks": 0, "avg_speedup": 0, "max_speedup": 0},
+        }
 
-#     return _transform_aggregated_data(all_benchmarks, latest_timestamp)
+    return _transform_aggregated_data(all_benchmarks, latest_timestamp)
 
 
 class PerformanceAnalyzer:

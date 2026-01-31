@@ -87,7 +87,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import unquote
 from urllib.parse import urlparse, parse_qs
-import typer
 import uvicorn
 from fastapi import FastAPI, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -188,21 +187,7 @@ try:
 except ImportError:
     VLLM_AVAILABLE = False
 
-# Inference optimizer functionality is built into PerformanceCore
-INFERENCE_OPTIMIZER_AVAILABLE = True
-
-
-# =============================================================================
-# Pydantic Models for Request/Response
-# =============================================================================
-
-class OptimizationRequest(BaseModel):
-    """Request model for starting an optimization job."""
-    chapter: str
-    technique: str
-    params: Optional[Dict[str, Any]] = None
-
-
+# Inference optimizer functirun_speed_tests
 class BenchRootUpdate(BaseModel):
     """Request model for updating bench root configuration."""
     bench_root: Optional[str] = None
@@ -8924,7 +8909,7 @@ if (dashboard_dir / "css").exists():
 # =============================================================================
 
 def serve_dashboard(
-    port: int = 6970,
+    port: int = 8000,
     data_file: Optional[Path] = None,
     bench_root: Optional[Path] = None,
     open_browser: bool = True,
@@ -8985,35 +8970,12 @@ def serve_dashboard(
     # Start uvicorn server
     uvicorn.run(app, host=host, port=port, log_level="info")
 
-
-# =============================================================================
-# CLI Interface
-# =============================================================================
-
-cli_app = typer.Typer(help="GPU Performance Lab Dashboard Server (FastAPI)")
-
-
-@cli_app.command("serve")
-def cli_serve(
-    port: int = typer.Option(6970, "--port", "-p", help="Port to run the server on"),
-    data: Optional[Path] = typer.Option(None, "--data", "-d", help="Path to benchmark results JSON file"),
-    bench_root: Optional[Path] = typer.Option(None, "--bench-root", "-r", help="Root directory to scan for benchmarks (defaults to repo root)."),
-    no_browser: bool = typer.Option(False, "--no-browser", help="Do not open browser automatically"),
-    host: str = typer.Option("0.0.0.0", "--host", help="Host to bind to"),
-) -> None:
-    """Start the FastAPI dashboard server."""
-    serve_dashboard(
-        port=port,
-        data_file=data,
-        bench_root=bench_root,
-        open_browser=not no_browser,
-        host=host
-    )
-
-
 def main() -> None:
-    cli_app()
-
+        serve_dashboard(
+                            port=8000,
+                            open_browser= True,
+                            host= "0.0.0.0"
+        )
 
 if __name__ == '__main__':
     main()

@@ -23,7 +23,7 @@ from core.analysis.performance_analyzer import (
     PerformanceAnalyzer,
     load_benchmark_data as load_benchmark_results,
 )
-from core import profile_artifacts
+from core.profile import profile_artifacts
 from core.analysis.compile_analysis import load_compile_analysis
 from core.discovery import get_bench_roots, discover_all_chapters
 
