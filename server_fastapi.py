@@ -6969,7 +6969,21 @@ async def get_gpu_power():
 async def get_nvlink_status():
     """Get NVLink status."""
     service = get_service()
-    return service._core.get_nvlink_status()
+    return service.engine.gpu.nvlink()
+
+
+@app.get("/api/gpu/control")
+async def get_gpu_control():
+    """Get GPU control state: clock settings, persistence mode."""
+    service = get_service()
+    return service.engine.gpu.control()
+
+
+@app.get("/api/gpu/topology-matrix")
+async def get_gpu_topology_matrix():
+    """Get raw nvidia-smi topo -m output."""
+    service = get_service()
+    return service.engine.gpu.topology_matrix()
 
 
 # =============================================================================
@@ -6996,7 +7010,7 @@ async def get_dependency_health():
 async def check_dependency_updates():
     """Check for dependency updates."""
     service = get_service()
-    return service._core.check_dependency_updates()
+    return service.engine.system.check_updates()
 
 
 @app.get("/api/system/context")
@@ -7012,6 +7026,34 @@ async def get_system_capabilities():
     """Get hardware capabilities."""
     service = get_service()
     return service.engine.system.capabilities()
+
+
+@app.get("/api/system/parameters")
+async def get_system_parameters():
+    """Get system kernel parameters affecting performance."""
+    service = get_service()
+    return service.engine.system.parameters()
+
+
+@app.get("/api/system/container")
+async def get_container_info():
+    """Get container/cgroup limits and configuration."""
+    service = get_service()
+    return service.engine.system.container()
+
+
+@app.get("/api/system/cpu-memory")
+async def get_cpu_memory_info():
+    """Get CPU/memory hierarchy: NUMA, caches, TLB."""
+    service = get_service()
+    return service.engine.system.cpu_memory()
+
+
+@app.get("/api/system/full-analysis")
+async def get_system_full_analysis():
+    """Get comprehensive system analysis: CPU, memory, container, params, optimizations."""
+    service = get_service()
+    return service.engine.system.full_analysis()
 
 
 # =============================================================================
@@ -7031,7 +7073,7 @@ async def get_benchmark_data():
 async def list_benchmark_targets():
     """List available benchmark targets."""
     service = get_service()
-    return service._core.list_benchmark_targets()
+    return service.engine.benchmark.targets()
 
 
 @app.get("/api/benchmark/available")
@@ -7039,7 +7081,40 @@ async def list_benchmark_targets():
 async def get_available_benchmarks():
     """Get available benchmarks."""
     service = get_service()
-    return service._core.get_available_benchmarks()
+    return service.engine.benchmark.available()
+
+
+@app.post("/api/benchmark/set-root")
+async def set_benchmark_root(request: Request):
+    """Dynamically update the benchmark root directory."""
+    service = get_service()
+    data = await request.json()
+    bench_root = data.get("bench_root")
+    return service.engine.benchmark.set_root(bench_root)
+
+
+@app.get("/api/benchmark/history-summary")
+async def get_benchmark_history_summary():
+    """Get combined benchmark history summary with trends."""
+    service = get_service()
+    return service.engine.benchmark.history_summary()
+
+
+@app.get("/api/benchmark/scan-directory")
+async def scan_benchmark_directory(
+    directory: str = Query(...),
+    dir_type: str = Query("chapter")
+):
+    """Scan a specific directory for benchmarks."""
+    service = get_service()
+    return service.engine.benchmark.scan_directory(directory, dir_type)
+
+
+@app.get("/api/benchmark/list-result-files")
+async def list_benchmark_result_files():
+    """List all benchmark result files found across artifacts and roots."""
+    service = get_service()
+    return service.engine.benchmark.list_result_files()
 
 
 @app.get("/api/benchmark/scan")
@@ -7096,7 +7171,7 @@ async def get_memory_timeline():
 async def get_cpu_gpu_timeline():
     """Get CPU/GPU timeline."""
     service = get_service()
-    return service._core.get_cpu_gpu_timeline()
+    return service.engine.profile.cpu_gpu_timeline()
 
 
 @app.get("/api/profile/kernels")
@@ -7152,7 +7227,7 @@ async def list_deep_profile_pairs():
 async def get_profile_recommendations():
     """Get profile recommendations."""
     service = get_service()
-    return service._core.get_profile_recommendations()
+    return service.engine.profile.recommendations()
 
 
 @app.get("/api/profiles")
@@ -7168,7 +7243,31 @@ async def load_profile_data():
 async def compare_profiles(chapter: str):
     """Compare profiles for a chapter."""
     service = get_service()
-    return service._core.compare_profiles(chapter)
+    return service.engine.profile.compare(chapter)
+
+
+@app.get("/api/profile/find-directory")
+async def find_profile_directory(chapter: str = Query(...)):
+    """Find the directory containing profiles for a chapter."""
+    service = get_service()
+    return service.engine.profile.find_directory(chapter)
+
+
+@app.post("/api/profile/analyze-metrics")
+async def analyze_profile_metrics(request: Request):
+    """Analyze metric-level diff between profile comparisons."""
+    service = get_service()
+    data = await request.json()
+    ncu_comparison = data.get("ncu_comparison", {})
+    nsys_comparison = data.get("nsys_comparison")
+    return service.engine.profile.analyze_metric_diff(ncu_comparison, nsys_comparison)
+
+
+@app.get("/api/profile/nsys-summary")
+async def get_nsys_summary(report_path: str = Query(...)):
+    """Summarize an existing nsys report."""
+    service = get_service()
+    return service.engine.profile.nsys_summary(report_path)
 
 
 @app.get("/api/profile/flamegraph/{chapter}")
@@ -7286,28 +7385,28 @@ async def get_cost_analysis(
 async def get_cpu_memory_analysis():
     """Get CPU memory analysis."""
     service = get_service()
-    return service._core.get_cpu_memory_analysis()
+    return service.engine.system.cpu_memory()
 
 
 @app.get("/api/analysis/system-params")
-async def get_system_parameters():
+async def get_system_parameters_analysis():
     """Get system parameters."""
     service = get_service()
-    return service._core.get_system_parameters()
+    return service.engine.system.parameters()
 
 
 @app.get("/api/analysis/container-limits")
-async def get_container_limits():
+async def get_container_limits_analysis():
     """Get container limits."""
     service = get_service()
-    return service._core.get_container_limits()
+    return service.engine.system.container()
 
 
 @app.get("/api/analysis/warp-divergence")
 async def analyze_warp_divergence(code: str = Query("")):
     """Analyze warp divergence."""
     service = get_service()
-    return service._core.analyze_warp_divergence(code)
+    return service.engine.analyze.warp_divergence(code)
 
 
 @app.get("/api/analysis/bank-conflicts")
@@ -7317,7 +7416,7 @@ async def analyze_bank_conflicts(
 ):
     """Analyze bank conflicts."""
     service = get_service()
-    return service._core.analyze_bank_conflicts(stride, element_size)
+    return service.engine.analyze.bank_conflicts(stride, element_size)
 
 
 @app.get("/api/analysis/memory-access")
@@ -7327,7 +7426,7 @@ async def analyze_memory_access(
 ):
     """Analyze memory access patterns."""
     service = get_service()
-    return service._core.analyze_memory_access(stride, element_size)
+    return service.engine.analyze.memory(stride, element_size)
 
 
 @app.get("/api/analysis/auto-tune")
@@ -7344,18 +7443,49 @@ async def run_auto_tuning(
 async def get_full_system_analysis():
     """Get full system analysis."""
     service = get_service()
-    return service._core.get_full_system_analysis()
+    return service.engine.system.full_analysis()
+
+
+@app.get("/api/analyze/cost-savings")
+async def get_cost_savings_analysis(ops_per_day: int = Query(1_000_000)):
+    """
+    Calculate aggregate cost savings from optimizations.
+    
+    Translates performance gains into business value using cloud GPU pricing.
+    """
+    service = get_service()
+    return service.engine.analyze.cost_savings(ops_per_day)
+
+
+@app.get("/api/analyze/comm-overlap")
+async def get_comm_overlap_analysis(model: str = Query("llama-3.1-70b")):
+    """Analyze communication/computation overlap opportunities."""
+    service = get_service()
+    return service.engine.analyze.comm_overlap(model)
+
+
+@app.get("/api/analyze/data-loading")
+async def get_data_loading_analysis():
+    """Analyze data loading pipeline and recommendations."""
+    service = get_service()
+    return service.engine.analyze.data_loading()
+
+
+@app.get("/api/analyze/energy")
+async def get_energy_analysis():
+    """Energy efficiency analysis."""
+    service = get_service()
+    return service.engine.analyze.energy()
 
 
 @app.get("/api/analysis/predict-scaling")
 async def predict_hardware_scaling(
-    from_gpu: str = Query("H100", alias="from"),
-    to_gpu: str = Query("B200", alias="to"),
-    workload: str = Query("inference")
+    model_size: float = Query(7.0),
+    gpus: int = Query(8)
 ):
-    """Predict hardware scaling."""
+    """Predict scaling behavior for model size and GPU count."""
     service = get_service()
-    return service._core.predict_hardware_scaling(from_gpu, to_gpu, workload)
+    return service.engine.analyze.predict_scaling(model_size, gpus)
 
 
 @app.get("/api/analysis/energy")
@@ -7428,10 +7558,57 @@ async def calculate_occupancy(
 
 @app.get("/api/optimize/recommendations")
 @app.get("/api/analysis/recommendations")
-async def get_constraint_recommendations():
-    """Get constraint-based recommendations."""
+async def get_optimization_recommendations(
+    model_size: float = Query(7),
+    gpus: int = Query(1),
+    goal: str = Query("throughput")
+):
+    """Get optimization recommendations for a model configuration."""
     service = get_service()
-    return service._core.get_constraint_recommendations()
+    return service.engine.optimize.recommend(model_size, gpus, goal)
+
+
+@app.get("/api/optimize/techniques")
+async def get_optimization_techniques():
+    """Get list of all available optimization techniques."""
+    service = get_service()
+    return service.engine.optimize.techniques()
+
+
+@app.get("/api/optimize/roi")
+async def get_optimization_roi():
+    """Calculate ROI for optimization techniques."""
+    service = get_service()
+    return service.engine.optimize.roi()
+
+
+@app.get("/api/optimize/playbooks")
+async def get_optimization_playbooks():
+    """Get optimization playbooks for common scenarios."""
+    service = get_service()
+    return service.engine.optimize.playbooks()
+
+
+@app.get("/api/optimize/details")
+async def get_optimization_details(technique: str = Query(...)):
+    """Get detailed information about a specific technique."""
+    service = get_service()
+    return service.engine.optimize.details(technique)
+
+
+@app.post("/api/optimize/suggestions")
+async def get_optimization_suggestions(request: Request):
+    """Get optimization suggestions based on model parameters."""
+    service = get_service()
+    params = await request.json()
+    return service.engine.optimize.suggestions(params)
+
+
+@app.get("/api/optimize/comprehensive")
+async def get_comprehensive_recommendations():
+    """Get comprehensive, actionable tuning recommendations."""
+    service = get_service()
+    return service.engine.optimize.comprehensive_recommendations()
 
 
 @app.get("/api/optimize/jobs")
@@ -7665,6 +7842,76 @@ async def export_html():
     service = get_service()
     html = service._core.export_html_report()
     return {"html": html}
+
+
+@app.post("/api/export/report")
+async def generate_custom_report(request: Request):
+    """Generate custom report with specified parameters."""
+    service = get_service()
+    params = await request.json()
+    return service.engine.export.report(params)
+
+
+# =============================================================================
+# API ENDPOINTS - AI Domain
+# =============================================================================
+
+@app.post("/api/ai/ask")
+async def ask_ai_question(request: Request):
+    """
+    Ask an AI-powered performance question.
+    
+    Body: {"question": "Why is my attention kernel slow?", "include_citations": true}
+    """
+    service = get_service()
+    data = await request.json()
+    question = data.get("question", "")
+    include_citations = data.get("include_citations", True)
+    return service.engine.ai.ask(question, include_citations)
+
+
+@app.get("/api/ai/explain")
+async def explain_concept(concept: str = Query(...)):
+    """
+    Explain a GPU/AI performance concept with book citations.
+    
+    Args:
+        concept: The concept to explain (e.g., "flash-attention", "tensor parallelism")
+    """
+    service = get_service()
+    return service.engine.ai.explain(concept)
+
+
+@app.post("/api/ai/analyze-kernel")
+async def analyze_kernel_code(request: Request):
+    """
+    Analyze CUDA kernel code with AI.
+    
+    Body: {"code": "...__global__ void kernel..."}
+    """
+    service = get_service()
+    data = await request.json()
+    code = data.get("code", "")
+    return service.engine.ai.analyze_kernel(code)
+
+
+@app.get("/api/ai/suggest-tools")
+async def suggest_tools_for_query(query: str = Query(...)):
+    """
+    Suggest relevant tools based on user intent.
+    
+    Args:
+        query: User intent (e.g., "I keep OOMing on 24GB VRAM")
+    """
+    service = get_service()
+    return service.engine.ai.suggest_tools(query)
+
+
+@app.get("/api/ai/status")
+async def get_ai_status():
+    """Check AI/LLM backend availability."""
+    service = get_service()
+    return service.engine.ai.status()
 
 
 # =============================================================================
@@ -8143,8 +8390,19 @@ async def get_performance_profile(
 
 
 # =============================================================================
-# API ENDPOINTS - Distributed Training
+# API ENDPOINTS - Distributed Training (Engine-based)
 # =============================================================================
+
+@app.get("/api/distributed/plan")
+async def get_parallelism_plan(
+    model_size: float = Query(7),
+    gpus: int = Query(8),
+    nodes: int = Query(1)
+):
+    """Plan parallelism strategy for distributed training."""
+    service = get_service()
+    return service.engine.distributed.plan(model_size, gpus, nodes)
+
 
 @app.get("/api/distributed/nccl")
 async def get_nccl_tuning(
@@ -8155,7 +8413,72 @@ async def get_nccl_tuning(
     pp: int = Query(1),
     diagnose: bool = Query(False)
 ):
-    """Get NCCL tuning recommendations."""
+    """Get NCCL tuning recommendations (uses engine)."""
+    service = get_service()
+    return service.engine.distributed.nccl(nodes, gpus, diagnose)
+
+
+@app.get("/api/distributed/fsdp")
+async def get_fsdp_config(model: str = Query("7b")):
+    """Get FSDP configuration for a model."""
+    service = get_service()
+    return service.engine.distributed.fsdp(model)
+
+
+@app.get("/api/distributed/tensor-parallel")
+async def get_tensor_parallel_config(model: str = Query("70b")):
+    """Get tensor parallelism configuration."""
+    service = get_service()
+    return service.engine.distributed.tensor_parallel(model)
+
+
+@app.get("/api/distributed/pipeline")
+async def get_pipeline_parallel_config(model: str = Query("70b")):
+    """Get pipeline parallelism configuration."""
+    service = get_service()
+    return service.engine.distributed.pipeline(model)
+
+
+@app.get("/api/distributed/slurm")
+async def generate_slurm_script(
+    model: str = Query("7b"),
+    nodes: int = Query(1),
+    gpus: int = Query(8),
+    framework: str = Query("pytorch")
+):
+    """Generate SLURM job script for distributed training."""
+    service = get_service()
+    return service.engine.distributed.slurm(model, nodes, gpus, framework)
+
+
+@app.get("/api/distributed/topology")
+async def get_parallelism_topology():
+    """Get parallelism topology information."""
+    service = get_service()
+    return service.engine.distributed.topology()
+
+
+@app.get("/api/distributed/cost-estimate")
+async def get_distributed_cost_estimate(
+    model_size: Optional[float] = Query(None),
+    training_tokens: Optional[float] = Query(None),
+    provider: str = Query("aws")
+):
+    """Estimate cloud costs for distributed training."""
+    service = get_service()
+    return service.engine.distributed.cost_estimate(model_size, training_tokens, provider)
+
+
+@app.get("/api/distributed/nccl-legacy")
+async def get_nccl_tuning_legacy(
+    nodes: int = Query(1),
+    gpus: int = Query(8),
+    model_size: float = Query(70),
+    tp: int = Query(1),
+    pp: int = Query(1),
+    diagnose: bool = Query(False)
+):
+    """Get NCCL tuning recommendations (legacy implementation)."""
     service = get_service()
     req = {
         "nodes": nodes,
@@ -8230,8 +8553,57 @@ async def get_long_context_config(
     return service._core.get_long_context_config(req)
 
 
+# =============================================================================
+# API ENDPOINTS - Inference Domain
+# =============================================================================
+
+@app.get("/api/inference/vllm-config")
+async def get_inference_vllm_config(
+    model: str = Query("7b"),
+    target: str = Query("throughput"),
+    compare: bool = Query(False)
+):
+    """Generate vLLM configuration."""
+    service = get_service()
+    return service.engine.inference.vllm_config(model, target, compare)
+
+
+@app.get("/api/inference/quantization")
+async def get_quantization_comparison(model_size: Optional[float] = Query(None)):
+    """Get quantization recommendations (FP8, INT8, INT4)."""
+    service = get_service()
+    return service.engine.inference.quantization(model_size)
+
+
+@app.post("/api/inference/deploy")
+async def generate_deploy_config(request: Request):
+    """Generate deployment configuration."""
+    service = get_service()
+    params = await request.json()
+    return service.engine.inference.deploy(params)
+
+
+@app.post("/api/inference/estimate")
+async def estimate_inference_performance(request: Request):
+    """Estimate inference performance."""
+    service = get_service()
+    params = await request.json()
+    return service.engine.inference.estimate(params)
+
+
+@app.get("/api/inference/calculate-batch-size")
+async def calculate_batch_size(
+    params: int = Query(7_000_000_000),
+    vram_free_gb: float = Query(20.0),
+    precision: str = Query("fp16")
+):
+    """Calculate recommended batch sizes for inference and training."""
+    service = get_service()
+    return service.engine.inference.calculate_batch_size(params, vram_free_gb, precision)
+
+
 @app.get("/api/distributed/vllm")
-async def get_vllm_config(
+async def get_vllm_config_legacy(
     model: str = Query("llama-3.1-70b"),
     gpus: int = Query(1),
     memory: float = Query(80),
@@ -8240,7 +8612,7 @@ async def get_vllm_config(
     quant: Optional[str] = Query(None),
     compare: bool = Query(False)
 ):
-    """Get vLLM configuration."""
+    """Get vLLM configuration (legacy endpoint - use /api/inference/vllm-config)."""
     service = get_service()
     req = {
         "model": unquote(model),
@@ -8522,21 +8894,21 @@ async def get_llm_explanation(
 async def get_history_summary():
     """Get history summary."""
     service = get_service()
-    return service._core.get_history_summary()
+    return service.engine.benchmark.history_summary()
 
 
 @app.get("/api/history/runs")
 async def get_history_runs():
     """Get history runs."""
     service = get_service()
-    return service._core.get_history_runs()
+    return service.engine.benchmark.history()
 
 
 @app.get("/api/history/trends")
 async def get_performance_trends():
     """Get performance trends."""
     service = get_service()
-    return service._core.get_performance_trends()
+    return service.engine.benchmark.trends()
 
 
 @app.get("/api/batch/optimize")

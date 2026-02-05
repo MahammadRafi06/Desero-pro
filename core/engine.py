@@ -146,35 +146,35 @@ def _safe_call(func: Callable, *args, **kwargs) -> Dict[str, Any]:
 DOMAINS = {
     "gpu": {
         "description": "GPU hardware info, topology, power, bandwidth",
-        "operations": ["info", "topology", "power", "bandwidth", "nvlink", "control"]
+        "operations": ["info", "topology", "power", "bandwidth", "nvlink", "control", "topology_matrix"]
     },
     "system": {
         "description": "Software stack, dependencies, environment",
-        "operations": ["software", "dependencies", "capabilities", "context", "parameters"]
+        "operations": ["software", "dependencies", "capabilities", "context", "parameters", "container", "cpu_memory", "check_updates", "full_analysis"]
     },
     "profile": {
         "description": "Profiling with nsys/ncu/torch, flame graphs, HTA",
-        "operations": ["nsys", "ncu", "torch", "hta", "flame_graph", "compare", "kernels"]
+        "operations": ["nsys", "ncu", "torch", "hta", "flame_graph", "compare", "kernels", "memory_timeline", "roofline", "list_profiles", "recommendations", "cpu_gpu_timeline", "find_directory", "analyze_metric_diff"]
     },
     "analyze": {
         "description": "Performance analysis and bottleneck detection",
-        "operations": ["bottlenecks", "pareto", "scaling", "whatif", "stacking", "power", "memory"]
+        "operations": ["bottlenecks", "pareto", "scaling", "whatif", "stacking", "power", "memory", "warp_divergence", "bank_conflicts", "leaderboards", "cost", "predict_scaling", "comm_overlap", "data_loading", "energy", "cost_savings", "tradeoffs"]
     },
     "optimize": {
         "description": "Optimization recommendations and techniques",
-        "operations": ["recommend", "techniques", "roi", "compound", "playbooks"]
+        "operations": ["recommend", "techniques", "roi", "compound", "playbooks", "details", "suggestions", "comprehensive_recommendations"]
     },
     "distributed": {
         "description": "Distributed training: parallelism, NCCL, FSDP",
-        "operations": ["plan", "nccl", "fsdp", "tensor_parallel", "pipeline", "slurm"]
+        "operations": ["plan", "nccl", "fsdp", "tensor_parallel", "pipeline", "slurm", "cost_estimate", "topology"]
     },
     "inference": {
         "description": "Inference optimization: vLLM, quantization, deployment",
-        "operations": ["vllm_config", "quantization", "deploy", "estimate"]
+        "operations": ["vllm_config", "quantization", "deploy", "estimate", "calculate_batch_size"]
     },
     "benchmark": {
         "description": "Run benchmarks, track history, list targets",
-        "operations": ["run", "targets", "history", "data", "compare_runs"]
+        "operations": ["run", "targets", "history", "data", "compare_runs", "available", "trends", "speed_test", "network_test", "set_root", "history_summary", "scan_directory", "list_result_files"]
     },
     "ai": {
         "description": "LLM-powered analysis, questions, explanations",
@@ -287,6 +287,14 @@ class SystemDomain:
     def cpu_memory(self) -> Dict[str, Any]:
         """Analyze CPU/memory hierarchy: NUMA, caches, TLB."""
         return _get_handler().get_cpu_memory_analysis()
+    
+    def check_updates(self) -> Dict[str, Any]:
+        """Check for outdated Python packages and dependencies."""
+        return _get_handler().check_dependency_updates()
+    
+    def full_analysis(self) -> Dict[str, Any]:
+        """Get comprehensive system analysis: CPU, memory, container, params, optimizations."""
+        return _get_handler().get_full_system_analysis()
 
 
 # =============================================================================
@@ -356,6 +364,19 @@ class ProfileDomain:
     def nsys_summary(self, report_path: str) -> Dict[str, Any]:
         """Summarize an existing nsys report."""
         return _safe_call(_get_handler().summarize_nsys_report, report_path)
+    
+    def cpu_gpu_timeline(self) -> Dict[str, Any]:
+        """Get CPU/GPU timeline visualization data."""
+        return _get_handler().get_cpu_gpu_timeline()
+    
+    def find_directory(self, chapter: str) -> Optional[Path]:
+        """Find the directory containing profiles for a chapter."""
+        result = _get_handler()._find_profile_directory(chapter)
+        return {"path": str(result) if result else None, "exists": result is not None if result else False}
+    
+    def analyze_metric_diff(self, ncu_comparison: Dict[str, Any], nsys_comparison: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Perform metric-level diff analysis on profile comparisons."""
+        return _get_handler()._analyze_metric_diff(ncu_comparison, nsys_comparison) or {}
 
 
 # =============================================================================
@@ -488,6 +509,20 @@ class AnalyzeDomain:
     def energy(self) -> Dict[str, Any]:
         """Energy efficiency analysis."""
         return _get_handler().get_energy_analysis()
+    
+    def cost_savings(self, ops_per_day: int = 1_000_000) -> Dict[str, Any]:
+        """
+        Calculate aggregate cost savings from optimizations.
+        
+        This translates performance gains into business value using cloud GPU pricing.
+        
+        Args:
+            ops_per_day: Assumed operations per day (default: 1M for enterprise scale)
+        
+        Returns:
+            Total monthly/yearly savings, speedup stats, and breakdown
+        """
+        return _get_handler().get_cost_savings_header(ops_per_day)
 
 
 # =============================================================================
@@ -584,6 +619,33 @@ class OptimizeDomain:
     def details(self, technique: str) -> Dict[str, Any]:
         """Get detailed information about a specific technique."""
         return _safe_call(_get_handler().get_optimization_details, technique)
+    
+    def suggestions(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Get optimization suggestions based on model parameters.
+        
+        Args:
+            params: Dict with keys like 'params' (model size), 'vram_gb', 'precision', 'can_run'
+        
+        Returns:
+            List of optimization suggestions with impact and solutions
+        """
+        model_params = params.get("params", 7e9)
+        vram_gb = params.get("vram_gb", 24.0)
+        precision = params.get("precision", "fp16")
+        can_run = params.get("can_run", True)
+        return _get_handler()._get_optimization_suggestions(model_params, vram_gb, precision, can_run)
+    
+    def comprehensive_recommendations(self) -> List[str]:
+        """
+        Get comprehensive, actionable tuning recommendations.
+        
+        Combines CPU/memory, system parameters, container limits, and GPU-specific tips.
+        
+        Returns:
+            List of top 10 actionable recommendations
+        """
+        return _get_handler()._generate_comprehensive_recommendations()
 
 
 # =============================================================================
@@ -743,6 +805,25 @@ class InferenceDomain:
     def estimate(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Estimate inference performance."""
         return _safe_call(_get_handler().get_inference_estimate, params)
+    
+    def calculate_batch_size(
+        self, 
+        params: int, 
+        vram_free_gb: float, 
+        precision: str = "fp16"
+    ) -> Dict[str, Any]:
+        """
+        Calculate recommended batch sizes for inference and training.
+        
+        Args:
+            params: Model parameter count (e.g., 7e9 for 7B model)
+            vram_free_gb: Available VRAM in GB
+            precision: Precision mode: "fp32", "fp16", "bf16", "int8", "int4"
+        
+        Returns:
+            Batch size recommendations, memory usage, and optimization suggestions
+        """
+        return _get_handler()._calculate_batch_for_params(params, vram_free_gb, precision)
 
 
 # =============================================================================
@@ -829,6 +910,56 @@ class BenchmarkDomain:
     def network_test(self) -> Dict[str, Any]:
         """Run network throughput tests."""
         return _safe_call(_get_handler().run_network_tests)
+    
+    def set_root(self, bench_root: Union[str, Path]) -> Dict[str, Any]:
+        """
+        Dynamically update the benchmark root directory.
+        
+        Args:
+            bench_root: Path to new benchmark root directory
+        
+        Returns:
+            Updated benchmark root path
+        """
+        from pathlib import Path
+        root_path = Path(bench_root) if isinstance(bench_root, str) else bench_root
+        return _get_handler().set_bench_root(root_path)
+    
+    def history_summary(self) -> Dict[str, Any]:
+        """
+        Get combined benchmark history summary.
+        
+        Includes total runs, latest run date, average speedup, full run list, and trends.
+        """
+        return _get_handler().get_history_summary()
+    
+    def scan_directory(self, directory: Union[str, Path], dir_type: str = "chapter") -> Dict[str, Any]:
+        """
+        Scan a directory for benchmarks.
+        
+        Args:
+            directory: Path to directory to scan
+            dir_type: Type of directory: "chapter" or "lab"
+        
+        Returns:
+            Directory info with benchmark files, expectations, and profiles
+        """
+        from pathlib import Path
+        dir_path = Path(directory) if isinstance(directory, str) else directory
+        return _get_handler()._scan_directory(dir_path, dir_type)
+    
+    def list_result_files(self) -> Dict[str, Any]:
+        """
+        List all benchmark result files found across artifacts and roots.
+        
+        Returns:
+            List of result file paths
+        """
+        files = _get_handler()._list_result_files()
+        return {
+            "files": [str(f) for f in files],
+            "count": len(files),
+        }
 
 
 # =============================================================================
