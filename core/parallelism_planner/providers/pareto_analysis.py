@@ -325,7 +325,7 @@ class ParetoAnalyzer:
             "=" * 80,
             "",
             f"GPU Hourly Cost: ${self.gpu_hourly_cost:.2f}",
-            f"Configurations Analyzed: {analysis['num_configurations']}",
+            f"Configurations Analyzed: {analysis.get('num_configurations', 0)}",  # added get to avoid KeyError
             "",
             "RECOMMENDATIONS:",
             "-" * 40,
