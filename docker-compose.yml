@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  parallelism-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: parallelism-advisor-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=info
+    volumes:
+      # Mount code for development (optional, comment out for production)
+      - ./core:/app/core:ro
+      - ./parallelism_planner_server.py:/app/parallelism_planner_server.py:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - api-network
+
+  # Optional: Add nginx reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    container_name: parallelism-api-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      # Uncomment for SSL
+      # - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - parallelism-api
+    restart: unless-stopped
+    networks:
+      - api-network
+    profiles:
+      - production
+
+networks:
+  api-network:
+    driver: bridge
+

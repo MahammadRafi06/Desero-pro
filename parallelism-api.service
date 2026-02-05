@@ -1,0 +1,45 @@
+[Unit]
+Description=Parallelism Strategy Advisor API Service
+After=network.target
+Documentation=https://github.com/your-org/Desero-pro
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/path/to/Desero-pro
+Environment="PATH=/path/to/Desero-pro/venv/bin"
+Environment="PYTHONUNBUFFERED=1"
+
+# Start command
+ExecStart=/path/to/Desero-pro/venv/bin/uvicorn parallelism_planner_server:app \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --workers 4 \
+    --log-level info
+
+# Restart policy
+Restart=always
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=30
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/path/to/Desero-pro
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=parallelism-api
+
+[Install]
+WantedBy=multi-user.target
+
